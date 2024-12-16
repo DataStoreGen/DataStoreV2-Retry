@@ -1,19 +1,16 @@
 local Folder = script.Parent
-local SessionModule = Folder:FindFirstChild('Session')
 local ServiceModule = Folder:FindFirstChild('ServiceModule')
-local PlayerTemplate = Folder:FindFirstChild('PlayersData')
 local DataStore1 = require(ServiceModule)
 local DataStore = {}
 
 DataStore.TemplateData = {
-    --[[example
-    Clicks = 0,
-    ClickPlus = 1,
-    --add more
-    ]]
+	-- example data
+	Clicks = 1,
+	ClickPlus = 1,
 }
 
 export type PlayersData = typeof(DataStore.TemplateData)
+
 DataStore.__index = DataStore
 
 function DataStore.new(dataName, Template)
