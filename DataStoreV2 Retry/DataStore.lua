@@ -1,19 +1,19 @@
 local Folder = script.Parent
 local ServiceModule = Folder:FindFirstChild('ServiceModule')
 local DataStore1 = require(ServiceModule)
-local DataStore = {}
+local DataStoreModule = {}
 
-DataStore.TemplateData = {
-	-- example data
-	Clicks = 1,
+DataStoreModule.TemplateData = {
+	Clicks = 0,
 	ClickPlus = 1,
+	SessionTime = 0,
 }
 
-export type PlayersData = typeof(DataStore.TemplateData)
+export type PlayersData = typeof(DataStoreModule.TemplateData)
 
-DataStore.__index = DataStore
+DataStoreModule.__index = DataStoreModule
 
-function DataStore.new(dataName, Template)
+function DataStoreModule.new(dataName, Template)
 	local self = {
 		dataStore = DataStore1.DataStore(dataName),
 		PlayersData = Template,
@@ -30,11 +30,11 @@ function DataStore.new(dataName, Template)
 		end
 		return clone
 	end
-	setmetatable(self, DataStore)
+	setmetatable(self, DataStoreModule)
 	return self
 end
 
-function DataStore:MergeToCurrent(data)
+function DataStoreModule:MergeToCurrent(data)
 	for key, value in pairs(self.PlayersData) do
 		if type(value) == 'table' then
 			data[key] = data[key] or {}
@@ -62,14 +62,14 @@ function CleanData(self, Data)
 	end
 end
 
-function DataStore:GetfromLastSession(player: Player)
+function DataStoreModule:GetfromLastSession(player: Player)
 	local success, data = pcall(function()
 		return self.dataStore:GetAsync(player)
 	end)
 	return data or self.CloneTemplate(self.PlayersData)
 end
 
-function DataStore:LoadData(player: Player): PlayersData?
+function DataStoreModule:LoadData(player: Player): PlayersData?
 	local data = self:GetfromLastSession(player)
 	data = self:MergeToCurrent(data)
 	CleanData(self, data)
@@ -78,43 +78,43 @@ function DataStore:LoadData(player: Player): PlayersData?
 	return newData
 end
 
-function DataStore:GetDatafromSession(player: Player)
+function DataStoreModule:GetDatafromSession(player: Player)
 	local Session = self.Session[player]
 	if not Session then return end
 	return Session
 end
 
-function DataStore:SetAsync(player: Player, canBind: boolean?, userIds: {any}?, options: DataStoreSetOptions?)
+function DataStoreModule:SetAsync(player: Player, canBind: boolean?, userIds: {any}?, options: DataStoreSetOptions?)
 	local data = self:GetDatafromSession(player)
 	return self.dataStore:SetAsync(player, data, canBind, userIds, options)
 end
 
-function DataStore:UpdateAsync(player: Player, canBind: boolean?)
+function DataStoreModule:UpdateAsync(player: Player, canBind: boolean?)
 	local data = self:GetDatafromSession(player)
 	return self.dataStore:UpdateAsync(player, function(oldData)
 		return data
 	end, canBind)
 end
 
-function DataStore:OnLeaveUpdate(player, canBind: boolean?)
+function DataStoreModule:OnLeaveUpdate(player, canBind: boolean?)
 	self:UpdateAsync(player, canBind)
 	self.Session[player] = nil
 end
 
-function DataStore:OnLeaveSet(player: Player, canBind: boolean?, userIds: {any}?, options: DataStoreSetOptions?)
+function DataStoreModule:OnLeaveSet(player: Player, canBind: boolean?, userIds: {any}?, options: DataStoreSetOptions?)
 	self:SetAsync(player, canBind, userIds, options)
 	self.Session[player] = nil
 end
 
-function DataStore:BindOnUpdate(canBind: boolean?)
+function DataStoreModule:BindOnUpdate(canBind: boolean?)
 	return self.dataStore:BindDataOnUpdate(canBind)
 end
 
-function DataStore:BindOnSet(canBind: boolean?)
+function DataStoreModule:BindOnSet(canBind: boolean?)
 	return self.dataStore:BindDataOnSet(canBind)
 end
 
-function DataStore:AutoSaveOnUpdate(Players, waitTime: number?)
+function DataStoreModule:AutoSaveOnUpdate(Players, waitTime: number?)
 	waitTime = waitTime or 180
 	waitTime = DataStore1.Number().clamp(waitTime, 0, 180)
 	task.spawn(function()
@@ -133,7 +133,7 @@ function DataStore:AutoSaveOnUpdate(Players, waitTime: number?)
 	end)
 end
 
-function DataStore:AutoSaveOnSet(Players, waitTime)
+function DataStoreModule:AutoSaveOnSet(Players, waitTime)
 	waitTime = DataStore1.Number().clamp(waitTime, 0, 180)
 	task.spawn(function()
 		while task.wait(waitTime) do
@@ -151,4 +151,10 @@ function DataStore:AutoSaveOnSet(Players, waitTime)
 	end)
 end
 
-return DataStore
+function DataStoreModule.GetData(player): PlayersData
+	local session = DataStore1.GetData().data(player)
+	if not session then return end
+	return session
+end
+
+return DataStoreModule

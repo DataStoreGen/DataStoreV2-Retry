@@ -5,6 +5,7 @@ local Players = ServiceModule.Players()
 local DataStore = require(Folder:FindFirstChild('DataStore'))
 
 local PlayersDataStore = DataStore.new('DataStore', DataStore.TemplateData)
+-- u can add ur own Session Value to track players session in game
 
 Players:PlayerAdded(function(player)
 	local oldData = PlayersDataStore:LoadData(player.UserId)
